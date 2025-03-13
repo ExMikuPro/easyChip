@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workspace>
+    <!-- begin -->
+    {{- range .Projects }}
+    <project>
+        <path>$WS_DIR$\{{ . }}\{{ . }}.ewp</path>
+    </project>
+    {{- end }}
+    <!-- end -->
+    <batchBuild />
+</workspace>

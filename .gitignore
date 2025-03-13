@@ -1,0 +1,59 @@
+# 编译生成的二进制文件和临时文件
+*.exe
+*.out
+*.o
+*.a
+*.so
+*.dll
+
+# Go 编译缓存
+/tmp/
+*.test
+*.prof
+*.profraw
+
+# Go modules 下载的依赖
+vendor/
+go.sum
+go.work
+
+# 依赖缓存目录
+/pkg/mod/
+*.modcache/
+
+# 编译时的临时目录
+/testdata/
+*.log
+*.db
+*.sqlite
+
+# 以 _test 结尾的文件夹
+*_test/
+
+# IDE 相关文件
+.vscode/
+.idea/
+*.iml
+*.sublime-workspace
+
+# GoLand 相关
+*.goorm/
+*.goland/
+
+# 覆盖测试文件
+*.cover
+*.cov
+cover.out
+
+# 环境变量文件
+.env
+.env.*
+
+# cgo 相关的中间文件
+_cgo_*
+
+# 忽略所有 XML 文件
+*.xml
+
+# 忽略 macOS .DS_Store 文件
+.DS_Store
