@@ -74,8 +74,59 @@ func startPage(w fyne.Window, a fyne.App) *fyne.Container {
 		widget.NewButton("视图", func() {}),
 	)
 
-	// ✅ 使用 Border 布局，将菜单栏固定在顶部
-	return container.NewBorder(menuBar, nil, nil, nil, nil)
+	// ✅ 创建主页面的三个按钮（纵向排列）
+	button1 := widget.NewButton("新建工程", func() {
+		openNewWindow(a, func(updatedData string) {
+			w.SetTitle("easy Chip - " + updatedData)
+		})
+	})
+	button2 := widget.NewButton("打开工程", func() { openFileDialog() })
+	button3 := widget.NewButton("设置", func() {})
+	buttonContainer := container.NewVBox(button1, button2, button3)
+
+	// ✅ 历史文件数据（可以动态更新）
+	historyFiles := []string{}
+	// ✅ 创建历史文件列表（右侧）
+	historyList := widget.NewList(
+		func() int {
+			if len(historyFiles) == 0 {
+				return 1 // 显示“暂无历史工程”
+			}
+			return len(historyFiles)
+		},
+		func() fyne.CanvasObject {
+			return container.NewHBox(
+				widget.NewLabel(""),
+				widget.NewButton("打开", func() {}),
+				widget.NewButton("删除", func() {}),
+			)
+		},
+		func(id widget.ListItemID, obj fyne.CanvasObject) {
+			hBox := obj.(*fyne.Container)
+			label := hBox.Objects[0].(*widget.Label)
+			openButton := hBox.Objects[1].(*widget.Button)
+			deleteButton := hBox.Objects[2].(*widget.Button)
+
+			if len(historyFiles) == 0 {
+				label.SetText("暂无历史工程")
+				openButton.Hide()
+				deleteButton.Hide()
+			} else {
+				label.SetText(historyFiles[id])
+				openButton.Show()
+				deleteButton.Show()
+			}
+		},
+	)
+	historyScroll := container.NewVScroll(historyList)
+	historyScroll.SetMinSize(fyne.NewSize(200, 150)) // 设置历史文件列表的最小大小
+
+	// ✅ 使用 HSplit 布局，将按钮和历史文件列表水平排列
+	mainContent := container.NewHSplit(buttonContainer, historyScroll)
+	mainContent.SetOffset(0.3) // 按钮占 30%，历史文件占 70%
+
+	// ✅ 使用 Border 布局，将菜单栏固定在顶部，主要内容在中间
+	return container.NewBorder(menuBar, nil, nil, nil, mainContent)
 }
 
 func MainWindows(w fyne.Window, a fyne.App) *fyne.Container {
