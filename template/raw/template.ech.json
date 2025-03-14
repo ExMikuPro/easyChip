@@ -1,0 +1,28 @@
+{
+  "app":{
+    "version": "1.0.0"
+  },
+  "mcu": {
+    "name": "CC2560F256",
+    "encapsulated": "qfn-64",
+    "number": "64"
+  },
+  "pin": {
+    "1": "PA1",
+    "2": "PA2"
+  },
+  "pin_mode": {
+    "PA1": "output",
+    "PA2": "input"
+  },
+  "rcc": {},
+  "adc": {},
+  "tim": {},
+  "spi": {},
+  "usart":{},
+  "uart": {},
+  "other": {
+    "usb": {},
+    "zigbee": {}
+  }
+}
