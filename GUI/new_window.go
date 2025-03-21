@@ -1,12 +1,45 @@
 package GUI
 
 import (
+	"encoding/json"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 )
+
+// 定义结构体匹配 JSON 结构
+type MCUInfo struct {
+	Name   string `json:"name"`
+	Detail string `json:"detail"`
+	Type   string `json:"type"`
+	IDE    struct {
+		IAR     bool `json:"IAR"`
+		KEIL    bool `json:"KEIL"`
+		Arduino bool `json:"Arduino"`
+	} `json:"IDE"`
+}
+
+type Template struct {
+	Path string `json:"path"`
+}
+
+type Author struct {
+	Email string `json:"email"`
+	Name  string `json:"name"`
+	URL   string `json:"url"`
+}
+
+// 总的 JSON 结构
+type Data struct {
+	Info     MCUInfo  `json:"info"`
+	Template Template `json:"template"`
+	Author   Author   `json:"author"`
+}
 
 func openNewWindow(a fyne.App, onUpdate func(string)) {
 	newWindow := a.NewWindow("选择MCU")
@@ -18,8 +51,8 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 	// 存储收藏的MCU
 	favoriteMCUs := make(map[string]bool)
 
-	// ✅ MCU 分类列表
-	categories := []string{"MCU A系列", "MCU B系列", "MCU C系列", "MCU D系列"}
+	// ✅ MCU 分类列表 - 添加"全部"选项
+	categories := []string{"全部", "MCU A系列", "MCU B系列", "MCU C系列", "MCU D系列"}
 	mcuData := map[string][]string{
 		"MCU A系列": {"A-100", "A-200", "A-300"},
 		"MCU B系列": {"B-100", "B-200"},
@@ -27,14 +60,24 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 		"MCU D系列": {"D-100", "D-200", "D-300", "D-400", "D-500"},
 	}
 
+	// 创建一个包含全部MCU的切片，并按字母数字排序
+
 	// ✅ MCU 详情数据
 	mcuDetails := map[string]string{
 		"A-100": "A-100: 32-bit, 48MHz, 128KB Flash",
 		"A-200": "A-200: 32-bit, 72MHz, 256KB Flash",
+		"A-300": "A-300: 32-bit, 96MHz, 512KB Flash",
 		"B-100": "B-100: 16-bit, 24MHz, 64KB Flash",
 		"B-200": "B-200: 16-bit, 48MHz, 128KB Flash",
 		"C-100": "C-100: ARM Cortex-M3, 120MHz, 512KB Flash",
+		"C-200": "C-200: ARM Cortex-M4, 144MHz, 768KB Flash",
+		"C-300": "C-300: ARM Cortex-M4, 168MHz, 1MB Flash",
+		"C-400": "C-400: ARM Cortex-M7, 216MHz, 2MB Flash",
 		"D-100": "D-100: RISC-V, 160MHz, 1MB Flash",
+		"D-200": "D-200: RISC-V, 180MHz, 2MB Flash",
+		"D-300": "D-300: RISC-V, 200MHz, 4MB Flash",
+		"D-400": "D-400: RISC-V, 240MHz, 8MB Flash",
+		"D-500": "D-500: RISC-V, 300MHz, 16MB Flash",
 	}
 
 	// ✅ 添加开发环境支持数据
@@ -54,6 +97,76 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 		"D-400": {"KEIL5": false, "IAR": true, "Arduino": true},
 		"D-500": {"KEIL5": true, "IAR": true, "Arduino": true},
 	}
+
+	// 指定要遍历的文件夹路径
+	rootDir := "./Library/"
+
+	// 读取文件夹内容
+	entries, err := os.ReadDir(rootDir)
+	if err != nil {
+		fmt.Println("读取目录失败:", err)
+		return
+	}
+
+	// 遍历所有文件和文件夹
+	fmt.Println("文件夹列表:")
+	for _, entry := range entries {
+		if entry.IsDir() { // 只打印文件夹
+			//读取文件夹里的所有文件
+			files, err := os.ReadDir("./Library/" + entry.Name())
+			if err != nil {
+				fmt.Println("无法读取文件夹:", err)
+				return
+			}
+
+			fmt.Println(entry.Name())
+			//遍历 JSON 文件
+			for _, file := range files {
+				if filepath.Ext(file.Name()) == ".json" { // 只处理 JSON 文件
+					filePath := filepath.Join("./Library/"+entry.Name(), file.Name())
+					fmt.Println(filePath)
+					// 读取文件内容
+					data, err := os.ReadFile(filePath)
+					if err != nil {
+						fmt.Println("无法读取文件:", filePath, err)
+						continue
+					}
+
+					// 解析 JSON
+					var jsonData Data
+					err = json.Unmarshal(data, &jsonData)
+					if err != nil {
+						fmt.Println("JSON 解析失败:", filePath, err)
+						continue
+					}
+
+					// 输出 JSON 数据
+					categories = append(categories, jsonData.Info.Type)
+					mcuData[jsonData.Info.Type] = append(mcuData[jsonData.Info.Type], jsonData.Info.Name)
+					mcuDetails[jsonData.Info.Name] = jsonData.Info.Detail
+					mcuSupport[jsonData.Info.Name] = make(map[string]bool)
+					mcuSupport[jsonData.Info.Name]["IAR"] = jsonData.Info.IDE.IAR
+					mcuSupport[jsonData.Info.Name]["KEIL5"] = jsonData.Info.IDE.KEIL
+					mcuSupport[jsonData.Info.Name]["Arduino"] = jsonData.Info.IDE.Arduino
+					fmt.Printf("文件: %s, MCU 名称: %s\n", file.Name(), jsonData.Info.Name)
+				}
+			}
+
+		}
+	}
+
+	//fmt.Println(mcuData)
+
+	var allMCUs []string
+	for _, mcuList := range mcuData {
+		allMCUs = append(allMCUs, mcuList...)
+	}
+
+	// 按字母数字顺序排序
+	sort.Strings(allMCUs)
+
+	// 将全部MCU添加到MCU数据中
+	mcuData["all"] = allMCUs
 
 	// 创建开始按钮，并默认禁用
 	startButton := widget.NewButton("开始", func() {
@@ -159,61 +272,59 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 
 		// 如果搜索框为空且没有选择筛选条件，恢复默认视图
 		if searchText == "" && !keilFilter && !iarFilter && !arduinoFilter && !favoriteFilter {
-			leftList.Select(0)
+			leftList.Select(0) // 选择"全部"分类
 			return
 		}
 
 		// 清空当前选择
 		leftList.UnselectAll()
 
-		// 搜索匹配的MCU
+		// 使用全部MCU数据作为基础进行搜索
 		var matchedMCUs []string
-		for _, category := range categories {
-			for _, mcu := range mcuData[category] {
-				// 检查MCU名称是否匹配搜索文本
-				nameMatch := searchText == "" || strings.Contains(strings.ToLower(mcu), strings.ToLower(searchText))
+		for _, mcu := range allMCUs {
+			// 检查MCU名称是否匹配搜索文本
+			nameMatch := searchText == "" || strings.Contains(strings.ToLower(mcu), strings.ToLower(searchText))
 
-				// 如果名称不匹配，则跳过此MCU
-				if !nameMatch {
-					continue
-				}
+			// 如果名称不匹配，则跳过此MCU
+			if !nameMatch {
+				continue
+			}
 
-				// 检查是否满足收藏筛选条件
-				if favoriteFilter && !favoriteMCUs[mcu] {
-					continue
-				}
+			// 检查是否满足收藏筛选条件
+			if favoriteFilter && !favoriteMCUs[mcu] {
+				continue
+			}
 
-				// 检查是否满足筛选条件
-				// 如果没有选择筛选条件，则视为通过筛选
-				filterMatch := true
+			// 检查是否满足筛选条件
+			// 如果没有选择筛选条件，则视为通过筛选
+			filterMatch := true
 
-				// 如果选择了筛选条件，则检查MCU是否支持这些条件
-				if keilFilter || iarFilter || arduinoFilter {
-					// 检查MCU是否在支持数据中
-					if support, exists := mcuSupport[mcu]; exists {
-						// 初始假设为通过筛选
-						filterMatch = true
+			// 如果选择了筛选条件，则检查MCU是否支持这些条件
+			if keilFilter || iarFilter || arduinoFilter {
+				// 检查MCU是否在支持数据中
+				if support, exists := mcuSupport[mcu]; exists {
+					// 初始假设为通过筛选
+					filterMatch = true
 
-						// 检查各个筛选条件
-						if keilFilter && !support["KEIL5"] {
-							filterMatch = false
-						}
-						if iarFilter && !support["IAR"] {
-							filterMatch = false
-						}
-						if arduinoFilter && !support["Arduino"] {
-							filterMatch = false
-						}
-					} else {
-						// 如果MCU不在支持数据中，则默认为不通过筛选
+					// 检查各个筛选条件
+					if keilFilter && !support["KEIL5"] {
 						filterMatch = false
 					}
+					if iarFilter && !support["IAR"] {
+						filterMatch = false
+					}
+					if arduinoFilter && !support["Arduino"] {
+						filterMatch = false
+					}
+				} else {
+					// 如果MCU不在支持数据中，则默认为不通过筛选
+					filterMatch = false
 				}
+			}
 
-				// 如果同时匹配名称和筛选条件，则添加到结果中
-				if nameMatch && filterMatch {
-					matchedMCUs = append(matchedMCUs, mcu)
-				}
+			// 如果同时匹配名称和筛选条件，则添加到结果中
+			if nameMatch && filterMatch {
+				matchedMCUs = append(matchedMCUs, mcu)
 			}
 		}
 
@@ -250,7 +361,13 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 		rightList.Refresh()           // 刷新右侧列表
 		rightList.UnselectAll()       // 清除右侧选择
 		startButton.Disable()         // 禁用开始按钮
-		infoLabel.SetText("MCU 详情信息将显示在这里...")
+
+		// 更新信息标签
+		if category == "all" {
+			infoLabel.SetText(fmt.Sprintf("全部MCU，共 %d 个", len(allMCUs)))
+		} else {
+			infoLabel.SetText("MCU 详情信息将显示在这里...")
+		}
 	}
 
 	// ✅ 当右侧 MCU 详情列表被点击时，存储选中的 MCU 型号并更新详情信息
@@ -319,5 +436,9 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 
 	// ✅ 设置窗口内容
 	newWindow.SetContent(container.NewBorder(topBar, nil, nil, nil, splitContainer))
+
+	// 默认选择"全部"分类
+	leftList.Select(0)
+
 	newWindow.Show()
 }

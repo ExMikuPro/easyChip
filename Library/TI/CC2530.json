@@ -1,0 +1,20 @@
+{
+  "info": {
+    "name": "CC2530",
+    "detail": "MCU概述",
+    "type": "TI(德州仪器)",
+    "IDE": {
+      "IAR": true,
+      "KEIL": true,
+      "Arduino": false
+    }
+  },
+  "template": {
+    "path": "./template/raw/cc2530"
+  },
+  "author":{
+    "email": "123@a.com",
+    "name": "ExMikuPro39",
+    "url": "https://a.com"
+  }
+}
