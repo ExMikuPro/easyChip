@@ -166,7 +166,7 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 	sort.Strings(allMCUs)
 
 	// 将全部MCU添加到MCU数据中
-	mcuData["all"] = allMCUs
+	mcuData["全部"] = allMCUs
 
 	// 创建开始按钮，并默认禁用
 	startButton := widget.NewButton("开始", func() {
@@ -363,7 +363,7 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 		startButton.Disable()         // 禁用开始按钮
 
 		// 更新信息标签
-		if category == "all" {
+		if category == "全部" {
 			infoLabel.SetText(fmt.Sprintf("全部MCU，共 %d 个", len(allMCUs)))
 		} else {
 			infoLabel.SetText("MCU 详情信息将显示在这里...")
