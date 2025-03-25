@@ -7,6 +7,11 @@
       "IAR": true,
       "KEIL": true,
       "Arduino": false
+    },
+    "specs": {
+      "core": 1,
+      "sram": 16,
+      "flash": 256
     }
   },
   "template": {

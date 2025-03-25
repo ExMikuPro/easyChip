@@ -17,7 +17,12 @@ type MCUInfo struct {
 	Name   string `json:"name"`
 	Detail string `json:"detail"`
 	Type   string `json:"type"`
-	IDE    struct {
+	Specs  struct {
+		Flash int `json:"flash"` // Flash 大小（KB）
+		Core  int `json:"core"`  // Core 频率（MHz）
+		SRAM  int `json:"sram"`  // SRAM 大小（KB）
+	} `json:"specs"`
+	IDE struct {
 		IAR     bool `json:"IAR"`
 		KEIL    bool `json:"KEIL"`
 		Arduino bool `json:"Arduino"`
@@ -60,7 +65,16 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 		"MCU D系列": {"D-100", "D-200", "D-300", "D-400", "D-500"},
 	}
 
-	// 创建一个包含全部MCU的切片，并按字母数字排序
+	var allMCUs []string
+	for _, mcuList := range mcuData {
+		allMCUs = append(allMCUs, mcuList...)
+	}
+
+	// 按字母数字顺序排序
+	sort.Strings(allMCUs)
+
+	// 将全部MCU添加到MCU数据中
+	mcuData["全部"] = allMCUs
 
 	// ✅ MCU 详情数据
 	mcuDetails := map[string]string{
@@ -78,6 +92,28 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 		"D-300": "D-300: RISC-V, 200MHz, 4MB Flash",
 		"D-400": "D-400: RISC-V, 240MHz, 8MB Flash",
 		"D-500": "D-500: RISC-V, 300MHz, 16MB Flash",
+	}
+
+	// ✅ 添加 MCU 规格信息映射
+	mcuSpecs := map[string]struct {
+		Flash int
+		Core  int
+		SRAM  int
+	}{
+		"A-100": {Flash: 128, Core: 48, SRAM: 32},
+		"A-200": {Flash: 256, Core: 72, SRAM: 64},
+		"A-300": {Flash: 512, Core: 96, SRAM: 128},
+		"B-100": {Flash: 64, Core: 24, SRAM: 16},
+		"B-200": {Flash: 128, Core: 48, SRAM: 32},
+		"C-100": {Flash: 512, Core: 120, SRAM: 128},
+		"C-200": {Flash: 768, Core: 144, SRAM: 256},
+		"C-300": {Flash: 1024, Core: 168, SRAM: 512},
+		"C-400": {Flash: 2048, Core: 216, SRAM: 1024},
+		"D-100": {Flash: 1024, Core: 160, SRAM: 256},
+		"D-200": {Flash: 2048, Core: 180, SRAM: 512},
+		"D-300": {Flash: 4096, Core: 200, SRAM: 1024},
+		"D-400": {Flash: 8192, Core: 240, SRAM: 2048},
+		"D-500": {Flash: 16384, Core: 300, SRAM: 4096},
 	}
 
 	// ✅ 添加开发环境支持数据
@@ -99,7 +135,12 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 	}
 
 	// 指定要遍历的文件夹路径
-	rootDir := "./Library/"
+	currentDir, err := os.Getwd()
+	if err != nil {
+		fmt.Println("Failed to get current directory:", err)
+		return
+	}
+	rootDir := filepath.Join(currentDir, "Library")
 
 	// 读取文件夹内容
 	entries, err := os.ReadDir(rootDir)
@@ -112,27 +153,22 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 	fmt.Println("文件夹列表:")
 	for _, entry := range entries {
 		if entry.IsDir() { // 只打印文件夹
-			//读取文件夹里的所有文件
-			files, err := os.ReadDir("./Library/" + entry.Name())
+			fmt.Println(rootDir + "/" + entry.Name())
+			files, err := os.ReadDir(rootDir + "/" + entry.Name())
 			if err != nil {
 				fmt.Println("无法读取文件夹:", err)
 				return
 			}
-
-			fmt.Println(entry.Name())
-			//遍历 JSON 文件
 			for _, file := range files {
 				if filepath.Ext(file.Name()) == ".json" { // 只处理 JSON 文件
-					filePath := filepath.Join("./Library/"+entry.Name(), file.Name())
+					filePath := filepath.Join(rootDir+"/"+entry.Name(), file.Name())
 					fmt.Println(filePath)
-					// 读取文件内容
 					data, err := os.ReadFile(filePath)
 					if err != nil {
 						fmt.Println("无法读取文件:", filePath, err)
 						continue
 					}
 
-					// 解析 JSON
 					var jsonData Data
 					err = json.Unmarshal(data, &jsonData)
 					if err != nil {
@@ -140,33 +176,33 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 						continue
 					}
 
-					// 输出 JSON 数据
+					// 更新数据
 					categories = append(categories, jsonData.Info.Type)
 					mcuData[jsonData.Info.Type] = append(mcuData[jsonData.Info.Type], jsonData.Info.Name)
 					mcuDetails[jsonData.Info.Name] = jsonData.Info.Detail
+
+					// 更新规格信息
+					mcuSpecs[jsonData.Info.Name] = struct {
+						Flash int
+						Core  int
+						SRAM  int
+					}{
+						Flash: jsonData.Info.Specs.Flash,
+						Core:  jsonData.Info.Specs.Core,
+						SRAM:  jsonData.Info.Specs.SRAM,
+					}
+
+					// 更新支持的开发环境
 					mcuSupport[jsonData.Info.Name] = make(map[string]bool)
 					mcuSupport[jsonData.Info.Name]["IAR"] = jsonData.Info.IDE.IAR
 					mcuSupport[jsonData.Info.Name]["KEIL5"] = jsonData.Info.IDE.KEIL
 					mcuSupport[jsonData.Info.Name]["Arduino"] = jsonData.Info.IDE.Arduino
+
 					fmt.Printf("文件: %s, MCU 名称: %s\n", file.Name(), jsonData.Info.Name)
 				}
 			}
-
 		}
 	}
-
-	//fmt.Println(mcuData)
-
-	var allMCUs []string
-	for _, mcuList := range mcuData {
-		allMCUs = append(allMCUs, mcuList...)
-	}
-
-	// 按字母数字顺序排序
-	sort.Strings(allMCUs)
-
-	// 将全部MCU添加到MCU数据中
-	mcuData["全部"] = allMCUs
 
 	// 创建开始按钮，并默认禁用
 	startButton := widget.NewButton("开始", func() {
@@ -188,7 +224,6 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 	rightList := widget.NewList(
 		func() int { return len(rightData) }, // 数据数量
 		func() fyne.CanvasObject {
-			// 创建一个水平容器包含星星按钮和文本标签
 			starButton := widget.NewButton("☆", nil)
 			starButton.Importance = widget.LowImportance
 			starButton.Resize(fyne.NewSize(30, 30))
@@ -196,7 +231,6 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 			return container.NewHBox(starButton, label)
 		},
 		func(i widget.ListItemID, obj fyne.CanvasObject) {
-			// 获取容器中的按钮和标签
 			hbox := obj.(*fyne.Container)
 			starButton := hbox.Objects[0].(*widget.Button)
 			label := hbox.Objects[1].(*widget.Label)
@@ -204,19 +238,15 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 			mcu := rightData[i]
 			label.SetText(mcu)
 
-			// 设置星星按钮的文本，根据收藏状态显示不同图标
 			if favoriteMCUs[mcu] {
-				starButton.SetText("★") // 实心星星表示已收藏
+				starButton.SetText("★")
 			} else {
-				starButton.SetText("☆") // 空心星星表示未收藏
+				starButton.SetText("☆")
 			}
 
-			// 设置星星按钮的点击事件
 			starButton.OnTapped = func() {
-				// 切换收藏状态
 				favoriteMCUs[mcu] = !favoriteMCUs[mcu]
 
-				// 更新按钮显示
 				if favoriteMCUs[mcu] {
 					starButton.SetText("★")
 				} else {
@@ -376,12 +406,19 @@ func openNewWindow(a fyne.App, onUpdate func(string)) {
 			selectedMCU = rightData[id]
 			fmt.Println("已选择 MCU: ", selectedMCU)
 
-			// 构建包含开发环境支持信息的详情字符串
 			var detailText string
 			if detail, exists := mcuDetails[selectedMCU]; exists {
 				detailText = detail
 			} else {
 				detailText = "未知的 MCU 详情"
+			}
+
+			// 添加规格信息
+			if specs, exists := mcuSpecs[selectedMCU]; exists {
+				detailText += fmt.Sprintf("\n\nMCU 规格信息:\n")
+				detailText += fmt.Sprintf("Flash 大小: %d KB\n", specs.Flash)
+				detailText += fmt.Sprintf("Core 频率: %d MHz\n", specs.Core)
+				detailText += fmt.Sprintf("SRAM 大小: %d KB", specs.SRAM)
 			}
 
 			// 添加开发环境支持信息
