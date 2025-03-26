@@ -111,9 +111,13 @@ import (
 //	// 可选：鼠标移动时执行操作
 //}
 
+var iconData []byte
+
 func main() {
 	a := app.NewWithID("org.sfnco.easychip")
 	w := a.NewWindow("easy Chip")
+	iconResource := fyne.NewStaticResource("./docs/easyChip.icns", iconData)
+	w.SetIcon(iconResource)
 	w.Resize(fyne.NewSize(800, 600))
 
 	w.SetContent(GUI.MainWindows(w, a))
