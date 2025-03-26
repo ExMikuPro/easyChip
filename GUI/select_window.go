@@ -46,7 +46,7 @@ type Data struct {
 	Author   Author   `json:"author"`
 }
 
-func openNewWindow(a fyne.App, onUpdate func(string)) {
+func openSelectWindow(a fyne.App, onUpdate func(string)) {
 	newWindow := a.NewWindow("选择MCU")
 	newWindow.Resize(fyne.NewSize(800, 600))
 

@@ -49,7 +49,7 @@ func startPage(w fyne.Window, a fyne.App) *fyne.Container {
 	inputEntry := widget.NewEntry()
 	fileMenu := fyne.NewMenu("",
 		fyne.NewMenuItem("新建", func() {
-			openNewWindow(a, func(updatedData string) {
+			openSelectWindow(a, func(updatedData string) {
 				inputEntry.SetText(updatedData)         // 更新主窗口的数据
 				w.SetTitle("easyChip - " + updatedData) // 更新窗口标题
 			})
@@ -76,7 +76,7 @@ func startPage(w fyne.Window, a fyne.App) *fyne.Container {
 
 	// ✅ 创建主页面的三个按钮（纵向排列）
 	button1 := widget.NewButton("新建工程", func() {
-		openNewWindow(a, func(updatedData string) {
+		openSelectWindow(a, func(updatedData string) {
 			w.SetTitle("easy Chip - " + updatedData)
 		})
 	})
