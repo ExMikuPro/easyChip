@@ -47,8 +47,8 @@ type Data struct {
 }
 
 func openSelectWindow(a fyne.App, onUpdate func(string)) {
-	newWindow := a.NewWindow("选择MCU")
-	newWindow.Resize(fyne.NewSize(800, 600))
+	selecsstWindow := a.NewWindow("选择MCU")
+	selecsstWindow.Resize(fyne.NewSize(800, 600))
 
 	// 变量存储用户选中的 MCU 型号
 	selectedMCU := ""
@@ -207,8 +207,8 @@ func openSelectWindow(a fyne.App, onUpdate func(string)) {
 	// 创建开始按钮，并默认禁用
 	startButton := widget.NewButton("开始", func() {
 		fmt.Println("程序开始运行，选中的 MCU: ", selectedMCU)
-		onUpdate(selectedMCU) // 将选中的 MCU 传回主窗口
-		newWindow.Close()     // 关闭子窗口
+		onUpdate(selectedMCU)  // 将选中的 MCU 传回主窗口
+		selecsstWindow.Close() // 关闭子窗口
 	})
 	startButton.Disable() // 初始时禁用
 
@@ -472,10 +472,10 @@ func openSelectWindow(a fyne.App, onUpdate func(string)) {
 	splitContainer.SetOffset(0.3) // **左侧占 30%，右侧占 70%**
 
 	// ✅ 设置窗口内容
-	newWindow.SetContent(container.NewBorder(topBar, nil, nil, nil, splitContainer))
+	selecsstWindow.SetContent(container.NewBorder(topBar, nil, nil, nil, splitContainer))
 
 	// 默认选择"全部"分类
 	leftList.Select(0)
 
-	newWindow.Show()
+	selecsstWindow.Show()
 }

@@ -24,7 +24,7 @@ type Targets struct {
 	Target Target `xml:"Target" json:"Target"`
 }
 
-// Targets 表示一个编译目标配置
+// Target 表示一个编译目标配置
 type Target struct {
 	TargetName    string       `xml:"TargetName" json:"TargetName"`       // 目标名称，如"Target 1"
 	ToolsetNumber string       `xml:"ToolsetNumber" json:"ToolsetNumber"` // 工具集编号，如"0x4"代表ARM-ADS工具链
