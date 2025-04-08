@@ -1,0 +1,46 @@
+{
+  "peripheral": [
+    {
+      "system": [
+        "DMA",
+        "GPIO",
+        "IWDG",
+        "NVIC",
+        "RCC",
+        "SYS",
+        "WWDG"
+      ]
+    },
+    {
+      "analog": [
+        "ADC1",
+        "ADC2"
+      ]
+    },
+    {
+      "timers": [
+        "RTC",
+        "LTIM1",
+        "TIM1",
+        "TIM2",
+        "TIM3",
+        "TIM4",
+        "TIM5"
+      ]
+    },
+    {
+      "connectivity": [
+        "I2C1",
+        "SPI1",
+        "SPI2",
+        "USART1",
+        "USART2"
+      ]
+    },
+    {
+      "computing": [
+        "CRC"
+      ]
+    }
+  ]
+}
