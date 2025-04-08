@@ -9,13 +9,20 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func startPage(w fyne.Window, a fyne.App) *fyne.Container {
+type AppContext struct {
+	Window        fyne.Window
+	App           fyne.App
+	MCUConfig     string
+	McuConfigPath map[string]string
+}
+
+func (ac *AppContext) startPage() *fyne.Container {
 	// ✅ 文件打开对话框
 	openFileDialog := func() {
 		openDialog := dialog.NewFileOpen(
 			func(reader fyne.URIReadCloser, err error) {
 				if err != nil {
-					dialog.ShowError(err, w)
+					dialog.ShowError(err, ac.Window)
 					return
 				}
 				if reader == nil {
@@ -33,7 +40,7 @@ func startPage(w fyne.Window, a fyne.App) *fyne.Container {
 
 					}
 				}(reader) // 关闭文件
-			}, w)
+			}, ac.Window)
 
 		// 设定文件类型过滤器（只允许选择 .ech 文件）
 		openDialog.SetFilter(storage.NewExtensionFileFilter([]string{".ech"}))
@@ -49,15 +56,15 @@ func startPage(w fyne.Window, a fyne.App) *fyne.Container {
 	inputEntry := widget.NewEntry()
 	fileMenu := fyne.NewMenu("",
 		fyne.NewMenuItem("新建", func() {
-			openSelectWindow(a, func(updatedData string) {
-				inputEntry.SetText(updatedData)         // 更新主窗口的数据
-				w.SetTitle("easyChip - " + updatedData) // 更新窗口标题
+			openSelectWindow(ac.App, func(updatedData string, mcuConfigPath map[string]string) {
+				inputEntry.SetText(updatedData)                 // 更新主窗口的数据
+				ac.Window.SetTitle("easyChip - " + updatedData) // 更新窗口标题
 			})
 		}),
 		fyne.NewMenuItem("打开", func() { openFileDialog() }),
 		fyne.NewMenuItem("保存", func() {}),
 	)
-	popUpMenu := widget.NewPopUpMenu(fileMenu, w.Canvas())
+	popUpMenu := widget.NewPopUpMenu(fileMenu, ac.Window.Canvas())
 
 	// ✅ 绑定点击事件，调整菜单位置
 	menuButton.OnTapped = func() {
@@ -76,8 +83,15 @@ func startPage(w fyne.Window, a fyne.App) *fyne.Container {
 
 	// ✅ 创建主页面的三个按钮（纵向排列）
 	button1 := widget.NewButton("新建工程", func() {
-		openSelectWindow(a, func(updatedData string) {
-			w.SetTitle("easy Chip - " + updatedData)
+		ac.Window.Close() // 关闭子窗口
+		openSelectWindow(ac.App, func(updatedData string, mcuConfigPath map[string]string) {
+			openConfigWindow(AppContext{
+				Window:        ac.Window,
+				App:           ac.App,
+				MCUConfig:     updatedData,
+				McuConfigPath: mcuConfigPath,
+			})
+			//ac.Window.SetTitle("easy Chip - " + updatedData)
 		})
 	})
 	button2 := widget.NewButton("打开工程", func() { openFileDialog() })
@@ -130,7 +144,13 @@ func startPage(w fyne.Window, a fyne.App) *fyne.Container {
 }
 
 func MainWindows(w fyne.Window, a fyne.App) *fyne.Container {
+
 	widget.NewLabel("文件保存路径选择")
 
-	return startPage(w, a)
+	appContext := AppContext{
+		Window: w,
+		App:    a,
+	}
+
+	return appContext.startPage()
 }

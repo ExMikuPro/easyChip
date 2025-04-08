@@ -15,9 +15,9 @@
     }
   },
   "template": {
-    "path": "./Library/Generic/AIR001/"
+    "path": "/Generic/AIR001/"
   },
-  "author":{
+  "author": {
     "email": "",
     "name": "ExMikuPro39",
     "url": "http://sfnco.k-on.plus.com"

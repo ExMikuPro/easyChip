@@ -46,12 +46,13 @@ type Data struct {
 	Author   Author   `json:"author"`
 }
 
-func openSelectWindow(a fyne.App, onUpdate func(string)) {
+func openSelectWindow(a fyne.App, onUpdate func(string, map[string]string)) {
 	selecsstWindow := a.NewWindow("选择MCU")
 	selecsstWindow.Resize(fyne.NewSize(800, 600))
 
 	// 变量存储用户选中的 MCU 型号
 	selectedMCU := ""
+	mcuConfigPaths := make(map[string]string)
 
 	// 存储收藏的MCU
 	favoriteMCUs := make(map[string]bool)
@@ -192,6 +193,10 @@ func openSelectWindow(a fyne.App, onUpdate func(string)) {
 						SRAM:  jsonData.Info.Specs.SRAM,
 					}
 
+					mcuConfigPaths[jsonData.Info.Name] = jsonData.Template.Path
+
+					fmt.Println(mcuConfigPaths)
+
 					// 更新支持的开发环境
 					mcuSupport[jsonData.Info.Name] = make(map[string]bool)
 					mcuSupport[jsonData.Info.Name]["IAR"] = jsonData.Info.IDE.IAR
@@ -207,8 +212,8 @@ func openSelectWindow(a fyne.App, onUpdate func(string)) {
 	// 创建开始按钮，并默认禁用
 	startButton := widget.NewButton("开始", func() {
 		fmt.Println("程序开始运行，选中的 MCU: ", selectedMCU)
-		onUpdate(selectedMCU)  // 将选中的 MCU 传回主窗口
-		selecsstWindow.Close() // 关闭子窗口
+		onUpdate(selectedMCU, mcuConfigPaths) // 将选中的 MCU 传回主窗口
+		selecsstWindow.Close()                // 关闭子窗口
 	})
 	startButton.Disable() // 初始时禁用
 
